@@ -7,22 +7,58 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/project
 WorldInfo {
 }
 Viewpoint {
-  orientation 0.28654570353579684 0.07983225647097172 -0.9547347121645511 2.9088715741780495
-  position 1.3183236766280346 0.010785284334846212 0.8376013400253628
+  orientation -0.008424727308076802 0.9982589770631813 -0.05837840938699112 0.7386007015001272
+  position -0.8863690804976212 0.25752469594468175 0.6138000964540896
 }
 TexturedBackground {
 }
 TexturedBackgroundLight {
 }
 RectangleArena {
+  translation 0 0 -0.05
 }
-Robot {
-  translation 0.14013068522815134 0.16249999192858336 0.04880241873956513
-  rotation -0.8762151332951368 0.04918142198448468 0.47940403410502264 -2.2304511911951543
+DEF BB-8 Robot {
+  translation 8.817568479645896e-15 -0.01000000000000009 -3.9240507965618097e-11
+  rotation 0.0001144949419864441 0.9999993236049609 0.0011574456915215113 1.7755177836579286e-13
   children [
+    DEF fakeBody Shape {
+      appearance Appearance {
+        material Material {
+          transparency 1
+        }
+      }
+      geometry Box {
+        size 0.1 0.1 0.1
+      }
+    }
+    DEF body_pose Pose {
+      rotation 0 1 0 0.3000000000000001
+      children [
+        DEF body Shape {
+          appearance Appearance {
+            material Material {
+              ambientIntensity 1
+              diffuseColor 1 0.6 0
+              emissiveColor 0.1 0 0
+              shininess 0.8
+              specularColor 0.6 0 0.5
+            }
+            texture ImageTexture {
+              url [
+                "../../../Users/esy/Desktop/bb8_1.jpg"
+              ]
+            }
+          }
+          geometry Sphere {
+            radius 0.05
+            subdivision 5
+          }
+        }
+      ]
+    }
     HingeJoint {
       jointParameters HingeJointParameters {
-        position 8.918145629132103e-12
+        position 238.05032104145968
       }
       device [
         RotationalMotor {
@@ -30,35 +66,22 @@ Robot {
         }
       ]
       endPoint Solid {
-        translation -2.382183801958454e-06 2.716091652005259e-06 -8.947261936342876e-07
-        rotation 1 0 0 0
-        children [
-          DEF body Shape {
-            appearance Appearance {
-              material Material {
-                ambientIntensity 1
-                diffuseColor 1 0.6 0
-                emissiveColor 0.1 0 0
-                shininess 0.8
-                specularColor 0.6 0 0.5
-                transparency 0.5
-              }
-            }
-            geometry Sphere {
-              radius 0.05
-              subdivision 5
-            }
-          }
-        ]
-        boundingObject USE body
-        physics Physics {
-        }
+        translation -6.938893903907228e-18 6.938893903907228e-18 0
+        rotation 0.7806793269092953 -0.2320938539460067 -0.5802346348650168 0
       }
     }
     DEF head Pose {
       translation 0 0 0.05
+      rotation 0.6689647316224496 -0.7432941462471663 0 3.141592653589793
       children [
         Shape {
+          appearance Appearance {
+            texture ImageTexture {
+              url [
+                "../../../Users/esy/Desktop/bb8_2.jpg"
+              ]
+            }
+          }
           geometry Sphere {
             radius 0.025
             subdivision 5
@@ -68,9 +91,25 @@ Robot {
     }
   ]
   name "mazeBot"
-  boundingObject USE body
-  physics Physics {
+  boundingObject DEF fakeBody Shape {
+    appearance Appearance {
+      material Material {
+        transparency 1
+      }
+    }
+    geometry Box {
+      size 0.1 0.1 0.1
+    }
   }
-  linearVelocity 0.011861894226272393 0.034397428399078715 -1.2603136895770744e-09
-  angularVelocity -0.6879485403744577 0.2372378898938834 0.4307002130950221
+  physics Physics {
+    density 0.0001
+  }
+  controller "<none>"
+  linearVelocity -6.933838093646486e-14 -5.236015715059808e-17 3.930232875240565e-15
+  angularVelocity 1.5881867761916066e-15 -1.3874399676021813e-12 -1.769173934518092e-16
+}
+Robot {
+  name "supervisor"
+  controller "mainController"
+  supervisor TRUE
 }
