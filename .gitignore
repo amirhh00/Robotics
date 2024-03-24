@@ -1,0 +1,3 @@
+worlds/*.jpg
+worlds/*.wbproj
+**/__pycache__/

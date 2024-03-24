@@ -1,0 +1,76 @@
+#VRML_SIM R2023b utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/RectangleArena.proto"
+
+WorldInfo {
+}
+Viewpoint {
+  orientation 0.28654570353579684 0.07983225647097172 -0.9547347121645511 2.9088715741780495
+  position 1.3183236766280346 0.010785284334846212 0.8376013400253628
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+RectangleArena {
+}
+Robot {
+  translation 0.14013068522815134 0.16249999192858336 0.04880241873956513
+  rotation -0.8762151332951368 0.04918142198448468 0.47940403410502264 -2.2304511911951543
+  children [
+    HingeJoint {
+      jointParameters HingeJointParameters {
+        position 8.918145629132103e-12
+      }
+      device [
+        RotationalMotor {
+          name "body_wheel"
+        }
+      ]
+      endPoint Solid {
+        translation -2.382183801958454e-06 2.716091652005259e-06 -8.947261936342876e-07
+        rotation 1 0 0 0
+        children [
+          DEF body Shape {
+            appearance Appearance {
+              material Material {
+                ambientIntensity 1
+                diffuseColor 1 0.6 0
+                emissiveColor 0.1 0 0
+                shininess 0.8
+                specularColor 0.6 0 0.5
+                transparency 0.5
+              }
+            }
+            geometry Sphere {
+              radius 0.05
+              subdivision 5
+            }
+          }
+        ]
+        boundingObject USE body
+        physics Physics {
+        }
+      }
+    }
+    DEF head Pose {
+      translation 0 0 0.05
+      children [
+        Shape {
+          geometry Sphere {
+            radius 0.025
+            subdivision 5
+          }
+        }
+      ]
+    }
+  ]
+  name "mazeBot"
+  boundingObject USE body
+  physics Physics {
+  }
+  linearVelocity 0.011861894226272393 0.034397428399078715 -1.2603136895770744e-09
+  angularVelocity -0.6879485403744577 0.2372378898938834 0.4307002130950221
+}
