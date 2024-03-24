@@ -45,7 +45,7 @@ DEF BB-8 Robot {
             }
             texture ImageTexture {
               url [
-                "../../../Users/esy/Desktop/bb8_1.jpg"
+                "../assets/bb8_1.jpg"
               ]
             }
           }
@@ -78,7 +78,7 @@ DEF BB-8 Robot {
           appearance Appearance {
             texture ImageTexture {
               url [
-                "../../../Users/esy/Desktop/bb8_2.jpg"
+                "../assets/bb8_2.jpg"
               ]
             }
           }
