@@ -1,58 +1,56 @@
 """mainController controller."""
 
-# You may need to import some classes of the controller module. Ex:
-#  from controller import Robot, Motor, DistanceSensor
 from controller import Keyboard, Supervisor
+from math import pi
+import numpy as np
 
-srobot = Supervisor()
-# create the Robot instance.
-# robot = Robot()
+supervisor = Supervisor()
 keyboard = Keyboard()
-root = srobot.getRoot()
-children_field = root.getField("children")
-# get the time step of the current world.
-# timestep = int(robot.getBasicTimeStep())
-stimestep = int(srobot.getBasicTimeStep())
+stimestep = int(supervisor.getBasicTimeStep())
 keyboard.enable(stimestep)
 
-bb8_node = srobot.getFromDef("BB-8")
-body_node = srobot.getFromDef("body_pose")
+bb8_node = supervisor.getFromDef("BB-8")
+body_node = supervisor.getFromDef("body_pose")
 translation_field = bb8_node.getField("translation")
 rotation_field = bb8_node.getField("rotation")
 bodyRotationField = body_node.getField("rotation")
 
-# bodyWh: Motor = robot.getDevice("body_wheel")
-# bodyWh.setPosition(float("inf"))
-# bodyWh.setVelocity(0.5)
+floor = supervisor.getFromDef("floor")
+floorSize = floor.getField("floorSize")
+floorTileSize = [x / 2 for x in (floor.getField("floorTileSize").getSFVec2f())]
+wallHeight = floor.getField("wallHeight").getSFVec3f()
+floor_width, floor_height = floorSize.getSFVec2f()
 
-# You should insert a getDevice-like function in order to get the
-# instance of a device of the robot. Something like:
-#  motor = robot.getDevice('motorname')
-#  ds = robot.getDevice('dsname')
-#  ds.enable(timestep)
+rows, cols = int(floor_width / floorTileSize[0]), int(floor_height / floorTileSize[1])
 
-# print(Keyboard.CONTROL + ord("B"))
-
-
-# Main loop:
-# - perform simulation steps until Webots is stopping the controller
-# def reset_robot_position():
-#     # Add code to reset the robot's position here
-#     bodyWh.setPosition(0)
-#     bodyWh.setVelocity(0)
-#     bodyWh.setAcceleration(0)
-#     # bodyWh.setRotation(0)
-#     pass
+print(f"rows: {rows}, cols: {cols}")
 
 
 def reset_robot_position():
-    new_value = [0, 0, 0.1]
+    new_value = [-floor_width / 2 + 0.08, -floor_height / 2 + 0.08, 0.00]
     translation_field.setSFVec3f(new_value)
     rotation_field.setSFRotation([0, 1, 0, 0])
     bodyRotationField.setSFRotation([0, 1, 0, 0])
 
 
 reset_robot_position()
+
+# Create walls matrix
+wall_matrix = np.random.choice([0, 1], size=(rows, cols), p=[0.01, 0.99])
+for col in range(cols):
+    wall_matrix[np.random.choice(rows)][col] = 0
+
+wallsGroup = supervisor.getFromDef("walls")
+
+for i in range(rows):
+    for j in range(cols):
+        if wall_matrix[i][j] == 1:
+            x = floor_width / 2 - (i + 1) * floorTileSize[0] + floorTileSize[0] / 2
+            y = floor_height / 2 - (j + 1) * floorTileSize[1]
+            wallsGroup.getField("children").importMFNodeFromString(
+                -1,
+                f'Wall {{ name "wall{i}_{j}" translation {x} {y} 0 rotation 0 0 0 {pi/2} size 0.001 {floorTileSize[0]} {wallHeight} }}',
+            )
 
 
 def moveBot(direction: str):
@@ -79,37 +77,16 @@ def moveBot(direction: str):
     bodyRotationField.setSFRotation(bodyRotation)
 
 
-while srobot.step(stimestep) != -1:
+while supervisor.step(stimestep) != -1:
     key = keyboard.getKey()
     if key == ord("R"):
         print("Resetting robot position")
         reset_robot_position()
     if key == keyboard.UP:
-        print("UP")
         moveBot("UP")
     if key == keyboard.DOWN:
-        print("DOWN")
         moveBot("DOWN")
     if key == keyboard.LEFT:
-        print("LEFT")
         moveBot("LEFT")
     if key == keyboard.RIGHT:
-        print("RIGHT")
         moveBot("RIGHT")
-
-# while robot.step(timestep) != -1:
-#     key = keyboard.getKey()
-#     if key == ord("R"):
-#         print("Resetting robot position")
-#         reset_robot_position()
-#     # Read the sensors:
-#     # Enter here functions to read sensor data, like:
-#     #  val = ds.getValue()
-
-#     # Process sensor data here.
-
-#     # Enter here functions to send actuator commands, like:
-#     #  motor.setPosition(10.0)
-#     pass
-
-# Enter here exit cleanup code.
