@@ -1,8 +1,11 @@
 """mainController controller."""
 
+import os, sys
 from controller import Keyboard, Supervisor
 from math import pi
-import numpy as np
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../")
+from utils.maze import create_maze
 
 supervisor = Supervisor()
 keyboard = Keyboard()
@@ -23,34 +26,58 @@ floor_width, floor_height = floorSize.getSFVec2f()
 
 rows, cols = int(floor_width / floorTileSize[0]), int(floor_height / floorTileSize[1])
 
-print(f"rows: {rows}, cols: {cols}")
+# Create walls matrix
+matrixCols = cols
+matrixRows = rows
+maze = create_maze(matrixRows, matrixCols)
+
+for i in range(matrixRows):
+    for j in range(matrixCols):
+        print(maze[i][j], end=" ")
+    print()
+
+startingPoint: list[int]
+endingPoint: list[int]
+
+for i in range(matrixRows):
+    if maze[0][i] == 0:
+        startingPoint = [0, i]
+        break
+
+for i in range(matrixRows):
+    if maze[matrixRows - 1][i] == 0:
+        endingPoint = [matrixRows - 1, i]
+        break
+
+print(f"Starting point: {startingPoint}")
+print(f"Ending point: {endingPoint}")
+
+
+wallsGroup = supervisor.getFromDef("walls")
+
+for i in range(matrixRows):
+    for j in range(matrixCols):
+        if maze[i][j] != 0:
+            x = floor_width / 2 - (i + 1) * floorTileSize[0] + floorTileSize[0] / 2
+            y = floor_height / 2 - (j + 1) * floorTileSize[1] + floorTileSize[1] / 2
+            wallsGroup.getField("children").importMFNodeFromString(
+                -1,
+                f'Wall {{ name "wall{i}_{j}" translation {x} {y} 0 rotation 0 0 0 {pi/2} size {floorTileSize[0]} {floorTileSize[1]} {wallHeight} }}',
+            )
 
 
 def reset_robot_position():
-    new_value = [-floor_width / 2 + 0.08, -floor_height / 2 + 0.08, 0.00]
+    # traverse first row to find a cell with value 0 to place the robot
+    extraDistance = startingPoint[1] * floorTileSize[0]
+    robotX = floor_height / 2 - 0.08 - extraDistance
+    robotY = floor_width / 2 - 0.08
+    new_value = [robotY, robotX, 0.00]
     translation_field.setSFVec3f(new_value)
     rotation_field.setSFRotation([0, 1, 0, 0])
     bodyRotationField.setSFRotation([0, 1, 0, 0])
 
 
 reset_robot_position()
-
-# Create walls matrix
-wall_matrix = np.random.choice([0, 1], size=(rows, cols), p=[0.01, 0.99])
-for col in range(cols):
-    wall_matrix[np.random.choice(rows)][col] = 0
-
-wallsGroup = supervisor.getFromDef("walls")
-
-for i in range(rows):
-    for j in range(cols):
-        if wall_matrix[i][j] == 1:
-            x = floor_width / 2 - (i + 1) * floorTileSize[0] + floorTileSize[0] / 2
-            y = floor_height / 2 - (j + 1) * floorTileSize[1]
-            wallsGroup.getField("children").importMFNodeFromString(
-                -1,
-                f'Wall {{ name "wall{i}_{j}" translation {x} {y} 0 rotation 0 0 0 {pi/2} size 0.001 {floorTileSize[0]} {wallHeight} }}',
-            )
 
 
 def moveBot(direction: str):
