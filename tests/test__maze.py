@@ -1,5 +1,6 @@
 import unittest
 from utils.maze import create_maze
+import time
 
 
 class TestMaze(unittest.TestCase):
@@ -14,4 +15,5 @@ class TestMaze(unittest.TestCase):
             print()
 
         print("\n")
+        time.sleep(0.1)
         self.assertIsNotNone(maze)

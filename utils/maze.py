@@ -20,13 +20,13 @@ def surroundingCells(maze, rand_wall, CELL=0):
 def create_maze(
     rows=20, cols=20, WALL=1, CELL=0
 ) -> list[list[list[int]], list[int], list[int]]:
-    unvisited = "u"
+    UNVISITED = "u"
     maze: list[list[int]] = []
 
     for i in range(0, rows):
         line = []
         for j in range(0, cols):
-            line.append(unvisited)
+            line.append(UNVISITED)
         maze.append(line)
 
     # Randomize starting point and set it a cell
@@ -62,7 +62,7 @@ def create_maze(
         # Check if it is a left wall
         if rand_wall[1] != 0:
             if (
-                maze[rand_wall[0]][rand_wall[1] - 1] == "u"
+                maze[rand_wall[0]][rand_wall[1] - 1] == UNVISITED
                 and maze[rand_wall[0]][rand_wall[1] + 1] == CELL
             ):
                 # Find the number of surrounding cells
@@ -104,7 +104,7 @@ def create_maze(
         # Check if it is an upper wall
         if rand_wall[0] != 0:
             if (
-                maze[rand_wall[0] - 1][rand_wall[1]] == "u"
+                maze[rand_wall[0] - 1][rand_wall[1]] == UNVISITED
                 and maze[rand_wall[0] + 1][rand_wall[1]] == CELL
             ):
 
@@ -145,7 +145,7 @@ def create_maze(
         # Check the bottom wall
         if rand_wall[0] != rows - 1:
             if (
-                maze[rand_wall[0] + 1][rand_wall[1]] == "u"
+                maze[rand_wall[0] + 1][rand_wall[1]] == UNVISITED
                 and maze[rand_wall[0] - 1][rand_wall[1]] == CELL
             ):
 
@@ -181,7 +181,7 @@ def create_maze(
         # Check the right wall
         if rand_wall[1] != cols - 1:
             if (
-                maze[rand_wall[0]][rand_wall[1] + 1] == "u"
+                maze[rand_wall[0]][rand_wall[1] + 1] == UNVISITED
                 and maze[rand_wall[0]][rand_wall[1] - 1] == CELL
             ):
 
@@ -222,7 +222,7 @@ def create_maze(
     # Mark the remaining unvisited cells as walls
     for i in range(0, rows):
         for j in range(0, cols):
-            if maze[i][j] == "u":
+            if maze[i][j] == UNVISITED:
                 maze[i][j] = WALL
 
     # Set entrance and exit

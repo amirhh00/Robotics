@@ -107,7 +107,7 @@ def moveBot(direction: str):
 while supervisor.step(stimestep) != -1:
     key = keyboard.getKey()
     if key == ord("R"):
-        print("Resetting robot position")
+        print("Resetting robot")
         reset_robot_position()
     if key == keyboard.UP:
         moveBot("UP")
