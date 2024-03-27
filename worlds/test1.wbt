@@ -8,8 +8,8 @@ IMPORTABLE EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R20
 WorldInfo {
 }
 Viewpoint {
-  orientation -0.0003982457406898761 0.9999998493689385 0.00037770680465901445 1.6307993059153596
-  position 0.4261380755439973 -0.010053304052012768 5.790513861409519
+  orientation 0.005851943501473509 0.9999581851050271 -0.00702728957109549 1.3883402593964318
+  position 0.8985392997979211 1.1453815124113065 1.2465913702364864
 }
 TexturedBackground {
 }
@@ -18,11 +18,83 @@ TexturedBackgroundLight {
 DEF floor RectangleArena {
   floorSize 3 3
   floorTileSize 0.3 0.3
+  wallHeight 0.15
 }
 DEF BB-8 Robot {
-  translation 1.4228053676534442 1.2763641406495772 0.04999960788316353
-  rotation -1.3175271183459582e-08 9.477449258370536e-09 -0.9999999999999999 0.13898953676677703
+  translation 1.420000000000045 1.269999999999955 0.049998492599874975
+  rotation -0.6229524164822186 -0.7786905206072361 0.07464154282566765 5.34658665034222e-17
   children [
+    DistanceSensor {
+      translation -0.024 0 0.06
+      rotation 0 0 1 3.14159
+      children [
+        Pose {
+          children [
+            Shape {
+              appearance PBRAppearance {
+              }
+              geometry Sphere {
+                radius 0.001
+              }
+            }
+          ]
+        }
+      ]
+      name "ds_down"
+    }
+    DistanceSensor {
+      translation 0.024 0 0.06
+      children [
+        Pose {
+          children [
+            Shape {
+              appearance PBRAppearance {
+              }
+              geometry Sphere {
+                radius 0.001
+              }
+            }
+          ]
+        }
+      ]
+      name "ds_up"
+    }
+    DistanceSensor {
+      translation 0 0.024 0.06
+      rotation 0 0 1 1.57079632679
+      children [
+        Pose {
+          children [
+            Shape {
+              appearance PBRAppearance {
+              }
+              geometry Sphere {
+                radius 0.001
+              }
+            }
+          ]
+        }
+      ]
+      name "ds_left"
+    }
+    DistanceSensor {
+      translation 0 -0.024 0.06
+      rotation 0 0 1 -1.5707953071795862
+      children [
+        Pose {
+          children [
+            Shape {
+              appearance PBRAppearance {
+              }
+              geometry Sphere {
+                radius 0.001
+              }
+            }
+          ]
+        }
+      ]
+      name "ds_right"
+    }
     DEF fakeBody Shape {
       appearance Appearance {
         material Material {
@@ -34,7 +106,7 @@ DEF BB-8 Robot {
       }
     }
     DEF body_pose Pose {
-      rotation 0 1 0 -0.8999999999999999
+      rotation 0 1 0 0
       children [
         DEF body Shape {
           appearance Appearance {
@@ -92,13 +164,13 @@ DEF BB-8 Robot {
   physics Physics {
     density 1
   }
-  controller "<none>"
-  linearVelocity -5.625301086329062e-10 -6.773159473730135e-10 -2.2122205178831678e-09
-  angularVelocity 1.3546318592154819e-08 -1.1250602368083516e-08 1.6243956027234793e-16
+  controller "mainController"
+  linearVelocity -5.89183027115082e-17 -7.170791684369981e-17 8.7109597437518e-06
+  angularVelocity 1.3010426069834125e-15 -1.3010426069817948e-15 -1.4164187003964845e-16
 }
 Robot {
   name "supervisor"
-  controller "mainController"
+  controller "worldController"
   supervisor TRUE
 }
 DEF walls Pose {
