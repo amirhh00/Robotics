@@ -3,6 +3,17 @@
 # You may need to import some classes of the controller module. Ex:
 #  from controller import Robot, Motor, DistanceSensor
 from controller import Robot
+import socket
+import json
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Get HOST and PORT from environment variables
+HOST = os.getenv("HOST")
+PORT = int(os.getenv("PORT"))
 
 # create the Robot instance.
 robot = Robot()
@@ -11,21 +22,39 @@ robot = Robot()
 timestep = int(robot.getBasicTimeStep())
 
 # You should insert a getDevice-like function in order to get the
-# instance of a device of the robot. Something like:
-dsUp = robot.getDevice('ds_up')
+# instance of a device of the robot. Something like distance sensors
+dsUp = robot.getDevice("ds_up")
+dsDown = robot.getDevice("ds_down")
+dsLeft = robot.getDevice("ds_left")
+dsRight = robot.getDevice("ds_right")
 dsUp.enable(timestep)
+dsDown.enable(timestep)
+dsLeft.enable(timestep)
+dsRight.enable(timestep)
+
+# Initialize socket server
+server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server_socket.bind((HOST, PORT))
+server_socket.listen()
+# Accept a client connection
+client_socket, addr = server_socket.accept()
+
+print(f"Server listening on {HOST}:{PORT}")
 
 # Main loop:
 # - perform simulation steps until Webots is stopping the controller
 while robot.step(timestep) != -1:
-    # Read the sensors:
-    # Enter here functions to read sensor data, like:
-    val = dsUp.getValue()
-    # print(val)
-    # Process sensor data here.
+    sensor_data = {
+        "Up": dsUp.getValue(),
+        "Down": dsDown.getValue(),
+        "Left": dsLeft.getValue(),
+        "Right": dsRight.getValue(),
+    }
 
-    # Enter here functions to send actuator commands, like:
-    #  motor.setPosition(10.0)
-    pass
+    # Convert sensor data to JSON
+    sensor_data_json = json.dumps(sensor_data)
 
-# Enter here exit cleanup code.
+    # Send sensor data to client
+    client_socket.sendall(sensor_data_json.encode())
+
+client_socket.close()

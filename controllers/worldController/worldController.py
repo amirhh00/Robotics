@@ -1,12 +1,24 @@
 """supervisor controller."""
 
-
 import os, sys
 from controller import Keyboard, Supervisor
 from math import pi
+import socket
+import json
+from dotenv import load_dotenv
+import os
+import time
+import threading
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../")
 from utils.maze import create_maze
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Get HOST and PORT from environment variables
+HOST = os.getenv("HOST")
+PORT = int(os.getenv("PORT"))
 
 supervisor = Supervisor()
 keyboard = Keyboard()
@@ -32,10 +44,10 @@ matrixCols = cols
 matrixRows = rows
 maze = create_maze(matrixRows, matrixCols)
 
-for i in range(matrixRows):
-    for j in range(matrixCols):
-        print(maze[i][j], end=" ")
-    print()
+# for i in range(matrixRows):
+#     for j in range(matrixCols):
+#         print(maze[i][j], end=" ")
+#     print()
 
 startingPoint: list[int]
 endingPoint: list[int]
@@ -50,21 +62,21 @@ for i in range(matrixRows):
         endingPoint = [matrixRows - 1, i]
         break
 
-print(f"Starting point: {startingPoint}")
-print(f"Ending point: {endingPoint}")
+# print(f"Starting point: {startingPoint}")
+# print(f"Ending point: {endingPoint}")
 
 
 wallsGroup = supervisor.getFromDef("walls")
 
-for i in range(matrixRows):
-    for j in range(matrixCols):
-        if maze[i][j] != 0:
-            x = floor_width / 2 - (i + 1) * floorTileSize[0] + floorTileSize[0] / 2
-            y = floor_height / 2 - (j + 1) * floorTileSize[1] + floorTileSize[1] / 2
-            wallsGroup.getField("children").importMFNodeFromString(
-                -1,
-                f'Wall {{ name "wall{i}_{j}" translation {x} {y} 0 rotation 0 0 0 {pi/2} size {floorTileSize[0]} {floorTileSize[1]} {wallHeight} }}',
-            )
+# for i in range(matrixRows):
+#     for j in range(matrixCols):
+#         if maze[i][j] != 0:
+#             x = floor_width / 2 - (i + 1) * floorTileSize[0] + floorTileSize[0] / 2
+#             y = floor_height / 2 - (j + 1) * floorTileSize[1] + floorTileSize[1] / 2
+#             wallsGroup.getField("children").importMFNodeFromString(
+#                 -1,
+#                 f'Wall {{ name "wall{i}_{j}" translation {x} {y} 0 rotation 0 0 0 {pi/2} size {floorTileSize[0]} {floorTileSize[1]} {wallHeight} }}',
+#             )
 
 
 def reset_robot_position():
@@ -80,40 +92,91 @@ def reset_robot_position():
 
 reset_robot_position()
 
+sensor_data: dict[str, float]
+moving = False
 
-def moveBot(direction: str):
+
+def moveBot(direction: str, step=False):
     current_position = translation_field.getSFVec3f()
     bodyRotation = bodyRotationField.getSFRotation()
+    global moving
 
-    if direction == "UP":
-        current_position[0] += 0.01
-        bodyRotation = [0, 1, 0, bodyRotation[3] + 0.3]
+    loopCount = 1 if not step else int(floorTileSize[1] * 100)
 
-    elif direction == "DOWN":
-        current_position[0] -= 0.01
-        bodyRotation = [0, 1, 0, bodyRotation[3] - 0.3]
+    if moving:
+        return
 
-    elif direction == "LEFT":
-        current_position[1] += 0.01
-        bodyRotation = [1, 0, 0, bodyRotation[3] - 0.3]
+    moving = True
+    for i in range(loopCount):
+        if direction == "UP":
+            current_position[0] += 0.01
+            bodyRotation = [0, 1, 0, bodyRotation[3] + 0.3]
+        elif direction == "DOWN":
+            current_position[0] -= 0.01
+            bodyRotation = [0, 1, 0, bodyRotation[3] - 0.3]
+        elif direction == "LEFT":
+            current_position[1] += 0.01
+            bodyRotation = [0, 1, 0, bodyRotation[3] + 0.3]
+        elif direction == "RIGHT":
+            current_position[1] -= 0.01
+            bodyRotation = [0, 1, 0, bodyRotation[3] - 0.3]
+        translation_field.setSFVec3f(current_position)
+        bodyRotationField.setSFRotation(bodyRotation)
+        if step:
+            time.sleep(0.01)
+    moving = False
 
-    elif direction == "RIGHT":
-        current_position[1] -= 0.01
-        bodyRotation = [1, 0, 0, bodyRotation[3] + 0.3]
 
-    translation_field.setSFVec3f(current_position)
-    bodyRotationField.setSFRotation(bodyRotation)
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client_socket.connect((HOST, PORT))
 
-while supervisor.step(stimestep) != -1:
+
+def auto_move():
+    # print(sensor_data)
+    pass
+
+
+def keyBoardHandler():
     key = keyboard.getKey()
     if key == ord("R"):
         print("Resetting robot")
         reset_robot_position()
+    direction = ""
+    useStep = False
     if key == keyboard.UP:
-        moveBot("UP")
+        direction = "UP"
     if key == keyboard.DOWN:
-        moveBot("DOWN")
+        direction = "DOWN"
     if key == keyboard.LEFT:
-        moveBot("LEFT")
+        direction = "LEFT"
     if key == keyboard.RIGHT:
-        moveBot("RIGHT")
+        direction = "RIGHT"
+    if key == ord("W"):
+        direction = "UP"
+        useStep = True
+    if key == ord("S"):
+        direction = "DOWN"
+        useStep = True
+    if key == ord("A"):
+        direction = "LEFT"
+        useStep = True
+    if key == ord("D"):
+        direction = "RIGHT"
+        useStep = True
+    if direction != "":
+        if useStep:
+            move_bot_thread = threading.Thread(
+                target=moveBot, args=(direction, useStep)
+            )
+            move_bot_thread.start()
+        else:
+            moveBot(direction)
+
+
+while supervisor.step(stimestep) != -1:
+    keyBoardHandler()
+    sensor_data_json = client_socket.recv(1024)
+    sensor_data = json.loads(sensor_data_json.decode())
+    auto_move()
+
+client_socket.close()
