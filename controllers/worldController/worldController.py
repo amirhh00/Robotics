@@ -116,10 +116,10 @@ def moveBot(direction: str, step=False):
             bodyRotation = [0, 1, 0, bodyRotation[3] - 0.3]
         elif direction == "LEFT":
             current_position[1] += 0.01
-            bodyRotation = [0, 1, 0, bodyRotation[3] + 0.3]
+            bodyRotation = [1, 0, 0, bodyRotation[3] - 0.3]
         elif direction == "RIGHT":
             current_position[1] -= 0.01
-            bodyRotation = [0, 1, 0, bodyRotation[3] - 0.3]
+            bodyRotation = [1, 0, 0, bodyRotation[3] + 0.3]
         translation_field.setSFVec3f(current_position)
         bodyRotationField.setSFRotation(bodyRotation)
         if step:
