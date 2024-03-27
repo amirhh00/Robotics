@@ -1,7 +1,5 @@
 """mainController controller."""
 
-# You may need to import some classes of the controller module. Ex:
-#  from controller import Robot, Motor, DistanceSensor
 from controller import Robot
 import socket
 import json
@@ -15,14 +13,10 @@ load_dotenv()
 HOST = os.getenv("HOST")
 PORT = int(os.getenv("PORT"))
 
-# create the Robot instance.
 robot = Robot()
 
-# get the time step of the current world.
 timestep = int(robot.getBasicTimeStep())
 
-# You should insert a getDevice-like function in order to get the
-# instance of a device of the robot. Something like distance sensors
 dsUp = robot.getDevice("ds_up")
 dsDown = robot.getDevice("ds_down")
 dsLeft = robot.getDevice("ds_left")
@@ -41,8 +35,6 @@ client_socket, addr = server_socket.accept()
 
 print(f"Server listening on {HOST}:{PORT}")
 
-# Main loop:
-# - perform simulation steps until Webots is stopping the controller
 while robot.step(timestep) != -1:
     sensor_data = {
         "Up": dsUp.getValue(),
@@ -54,7 +46,7 @@ while robot.step(timestep) != -1:
     # Convert sensor data to JSON
     sensor_data_json = json.dumps(sensor_data)
 
-    # Send sensor data to client
+    # Send sensor data to 1 client (for more clients we need to use threads)
     client_socket.sendall(sensor_data_json.encode())
 
 client_socket.close()

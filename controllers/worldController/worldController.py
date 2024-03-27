@@ -31,6 +31,9 @@ translation_field = bb8_node.getField("translation")
 rotation_field = bb8_node.getField("rotation")
 bodyRotationField = body_node.getField("rotation")
 
+# get fakeBody_node shape Box and get its size
+bb8_shapeSize = supervisor.getFromDef("fakeBodyShape").getField("size").getSFVec3f()
+
 floor = supervisor.getFromDef("floor")
 floorSize = floor.getField("floorSize")
 floorTileSize = [x / 2 for x in (floor.getField("floorTileSize").getSFVec2f())]
@@ -62,28 +65,37 @@ for i in range(matrixRows):
         endingPoint = [matrixRows - 1, i]
         break
 
-# print(f"Starting point: {startingPoint}")
-# print(f"Ending point: {endingPoint}")
+print(f"Starting point: {startingPoint}")
+print(f"Ending point: {endingPoint}")
 
 
 wallsGroup = supervisor.getFromDef("walls")
 
-# for i in range(matrixRows):
-#     for j in range(matrixCols):
-#         if maze[i][j] != 0:
-#             x = floor_width / 2 - (i + 1) * floorTileSize[0] + floorTileSize[0] / 2
-#             y = floor_height / 2 - (j + 1) * floorTileSize[1] + floorTileSize[1] / 2
-#             wallsGroup.getField("children").importMFNodeFromString(
-#                 -1,
-#                 f'Wall {{ name "wall{i}_{j}" translation {x} {y} 0 rotation 0 0 0 {pi/2} size {floorTileSize[0]} {floorTileSize[1]} {wallHeight} }}',
-#             )
+for i in range(matrixRows):
+    for j in range(matrixCols):
+        if maze[i][j] != 0:
+            x = floor_width / 2 - (i + 1) * floorTileSize[0] + floorTileSize[0] / 2
+            y = floor_height / 2 - (j + 1) * floorTileSize[1] + floorTileSize[1] / 2
+            wallsGroup.getField("children").importMFNodeFromString(
+                -1,
+                f'Wall {{ name "wall{i}_{j}" translation {x} {y} 0 rotation 0 0 0 {pi/2} size {floorTileSize[0]} {floorTileSize[1]} {wallHeight} }}',
+            )
 
 
 def reset_robot_position():
     # traverse first row to find a cell with value 0 to place the robot
     extraDistance = startingPoint[1] * floorTileSize[0]
-    robotX = floor_height / 2 - 0.08 - extraDistance
-    robotY = floor_width / 2 - 0.08
+    robotX = (
+        floor_height / 2
+        - extraDistance
+        - (bb8_shapeSize[1] / 2)
+        - (floorTileSize[1] / 2 - bb8_shapeSize[1] / 2)
+    )
+    robotY = (
+        floor_width / 2
+        - (bb8_shapeSize[0] / 2)
+        - (floorTileSize[0] / 2 - bb8_shapeSize[0] / 2)
+    )
     new_value = [robotY, robotX, 0.00]
     translation_field.setSFVec3f(new_value)
     rotation_field.setSFRotation([0, 1, 0, 0])
@@ -94,12 +106,13 @@ reset_robot_position()
 
 sensor_data: dict[str, float]
 moving = False
+move_bot_thread: threading.Thread
 
 
 def moveBot(direction: str, step=False):
     current_position = translation_field.getSFVec3f()
     bodyRotation = bodyRotationField.getSFRotation()
-    global moving
+    global moving, move_bot_thread
 
     loopCount = 1 if not step else int(floorTileSize[1] * 100)
 
@@ -130,14 +143,38 @@ def moveBot(direction: str, step=False):
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.connect((HOST, PORT))
 
+discoveryMatrix: list[list[int]] = [
+    [0 for i in range(matrixCols)] for j in range(matrixRows)
+]
+
 
 def auto_move():
-    # print(sensor_data)
-    pass
+    # move bot to the right for ever unless it hits a wall
+    # if sensor_data[direction] < 1000.0 then there is a wall
+    # if sensor_data[direction] == 1000.0 then there is no wall
+    global moving, move_bot_thread, sensor_data
+    while True:
+        try:
+            if moving:
+                continue
+            direction = ""
+            # if sensor_data["Right"] == 1000.0:
+            #     direction = "RIGHT"
+            # elif sensor_data["Up"] == 1000.0:
+            #     direction = "UP"
+            # elif sensor_data["Down"] == 1000.0:
+            #     direction = "DOWN"
+            # elif sensor_data["Left"] == 1000.0:
+            #     direction = "LEFT"
+            if direction != "":
+                moveBot(direction, True)
+        except Exception as e:
+            pass
 
 
 def keyBoardHandler():
     key = keyboard.getKey()
+    global move_bot_thread
     if key == ord("R"):
         print("Resetting robot")
         reset_robot_position()
@@ -166,17 +203,18 @@ def keyBoardHandler():
     if direction != "":
         if useStep:
             move_bot_thread = threading.Thread(
-                target=moveBot, args=(direction, useStep)
+                target=moveBot, args=(direction, True), name="move_bot_thread"
             )
             move_bot_thread.start()
         else:
             moveBot(direction)
 
 
+threading.Thread(target=auto_move).start()
+
 while supervisor.step(stimestep) != -1:
     keyBoardHandler()
     sensor_data_json = client_socket.recv(1024)
     sensor_data = json.loads(sensor_data_json.decode())
-    auto_move()
 
 client_socket.close()

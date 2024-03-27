@@ -8,8 +8,8 @@ IMPORTABLE EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R20
 WorldInfo {
 }
 Viewpoint {
-  orientation 0.005851943501473509 0.9999581851050271 -0.00702728957109549 1.3883402593964318
-  position 0.8985392997979211 1.1453815124113065 1.2465913702364864
+  orientation -0.0003981633549170444 0.999999840336525 0.0004009898592157338 1.570799315218858
+  position -0.009152170186331604 0.0005468371133298114 4.185778407356485
 }
 TexturedBackground {
 }
@@ -21,8 +21,8 @@ DEF floor RectangleArena {
   wallHeight 0.15
 }
 DEF BB-8 Robot {
-  translation 1.420000000000045 1.269999999999955 0.049998492599874975
-  rotation -0.6229524164822186 -0.7786905206072361 0.07464154282566765 5.34658665034222e-17
+  translation 1.4249999999992453 1.2703440525103753 0.04999877629903918
+  rotation -0.9999999999999821 1.676750027163569e-10 1.8868727392038845e-07 1.2663781794993511e-06
   children [
     DistanceSensor {
       translation -0.024 0 0.06
@@ -101,7 +101,7 @@ DEF BB-8 Robot {
           transparency 1
         }
       }
-      geometry Box {
+      geometry DEF fakeBodyShape Box {
         size 0.1 0.1 0.1
       }
     }
@@ -165,8 +165,6 @@ DEF BB-8 Robot {
     density 1
   }
   controller "mainController"
-  linearVelocity -5.89183027115082e-17 -7.170791684369981e-17 8.7109597437518e-06
-  angularVelocity 1.3010426069834125e-15 -1.3010426069817948e-15 -1.4164187003964845e-16
 }
 Robot {
   name "supervisor"
