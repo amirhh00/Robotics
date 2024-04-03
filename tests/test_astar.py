@@ -21,6 +21,7 @@ class TestAStar(unittest.TestCase):
         end = (9, 9)
 
         path = astar(maze, start, end)
+        print("priint")
         print(path)
 
         # expect result to exists

@@ -16,13 +16,13 @@ TexturedBackground {
 TexturedBackgroundLight {
 }
 DEF floor RectangleArena {
-  floorSize 3 3
-  floorTileSize 0.3 0.3
+  floorSize 2 2
+  floorTileSize 0.4 0.4
   wallHeight 0.15
 }
 DEF BB-8 Robot {
-  translation 1.4249999999992453 1.2703440525103753 0.04999877629903918
-  rotation -0.9999999999999821 1.676750027163569e-10 1.8868727392038845e-07 1.2663781794993511e-06
+  translation -2.2792508849048807 0.7750007282587633 0.049999605454818456
+  rotation -1.6302938953268846e-08 -0.9980866953016659 0.06182999807374499 5.290321229512554e-07
   children [
     DistanceSensor {
       translation -0.024 0 0.06
@@ -106,7 +106,7 @@ DEF BB-8 Robot {
       }
     }
     DEF body_pose Pose {
-      rotation 0 1 0 0
+      rotation 0 1 0 -0.5522203923061808
       children [
         DEF body Shape {
           appearance Appearance {
@@ -165,6 +165,8 @@ DEF BB-8 Robot {
     density 1
   }
   controller "mainController"
+  linearVelocity -4.068587865509534e-07 -1.0449515809721435e-17 -6.57709066098632e-08
+  angularVelocity -8.598233699237124e-16 -8.137176129446462e-06 2.6779785672928874e-17
 }
 Robot {
   name "supervisor"

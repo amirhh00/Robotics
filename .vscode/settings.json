@@ -10,6 +10,6 @@
   "python.testing.unittestEnabled": true,
   "python.analysis.extraPaths": [
     "C:/Program Files/Webots/lib/controller/python",
-    "C:/Users/2316946/AppData/Local/Programs/Webots/lib/controller/python"
+    "~/AppData/Local/Programs/Webots/lib/controller/python"
   ]
 }

@@ -137,6 +137,7 @@ def moveBot(direction: str, step=False):
         bodyRotationField.setSFRotation(bodyRotation)
         if step:
             time.sleep(0.01)
+    time.sleep(0.5)
     moving = False
 
 
@@ -162,8 +163,8 @@ def auto_move():
             #     direction = "RIGHT"
             # elif sensor_data["Up"] == 1000.0:
             #     direction = "UP"
-            # elif sensor_data["Down"] == 1000.0:
-            #     direction = "DOWN"
+            if sensor_data["Down"] == 1000.0:
+                direction = "DOWN"
             # elif sensor_data["Left"] == 1000.0:
             #     direction = "LEFT"
             if direction != "":
@@ -171,6 +172,7 @@ def auto_move():
         except Exception as e:
             pass
 
+# https://www.laurentluce.com/posts/solving-mazes-using-python-simple-recursivity-and-a-search/
 
 def keyBoardHandler():
     key = keyboard.getKey()
