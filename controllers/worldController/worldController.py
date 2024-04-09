@@ -1,5 +1,6 @@
 """supervisor controller."""
 
+import random
 import os, sys
 from controller import Keyboard, Supervisor
 from math import pi
@@ -47,10 +48,36 @@ matrixCols = cols
 matrixRows = rows
 maze = create_maze(matrixRows, matrixCols)
 
-# for i in range(matrixRows):
-#     for j in range(matrixCols):
-#         print(maze[i][j], end=" ")
-#     print()
+# enum for matrix values
+# 0: empty cell
+# 1: unreachable cell: e.g. wall
+# 2: ending cell
+# 3: visited cell
+# infinite: unvisited cell
+EMPTY = 0
+WALL = 1
+ENDING = 2
+VISITED = 3
+UNVISITED = float("inf")
+
+isFinished = False
+
+
+def printMatrix(mat=maze):
+    for i in range(len(mat)):
+        for j in range(len(mat[i])):
+            print("[" if j == 0 else "", end="")
+            print(
+                (
+                    "i,"
+                    if mat[i][j] == UNVISITED
+                    else (f"{mat[i][j]}{"," if j < len(mat[i]) - 1 else ""}") # nopep8
+                ),
+                end=" " if j < len(mat[i]) - 1 else "],\n",
+            )
+
+        print()
+    print("-----------------------\n")
 
 startingPoint: list[int]
 endingPoint: list[int]
@@ -78,7 +105,7 @@ for i in range(matrixRows):
             y = floor_height / 2 - (j + 1) * floorTileSize[1] + floorTileSize[1] / 2
             wallsGroup.getField("children").importMFNodeFromString(
                 -1,
-                f'Wall {{ name "wall{i}_{j}" translation {x} {y} 0 rotation 0 0 0 {pi/2} size {floorTileSize[0]} {floorTileSize[1]} {wallHeight} }}',
+                f'DEF WALL{i}_{j} Wall {{ translation {x} {y} 0 rotation 0 0 0 {pi/2} size {floorTileSize[0]} {floorTileSize[1]} {wallHeight} }}',
             )
 
 
@@ -108,18 +135,81 @@ sensor_data: dict[str, float]
 moving = False
 move_bot_thread: threading.Thread
 
+robotPosition = [startingPoint[0], startingPoint[1]]
+
+
+grid: list[list[int]] = [
+    [UNVISITED for i in range(matrixCols)] for j in range(matrixRows)
+]
+
+# set the ending cell
+grid[endingPoint[0]][endingPoint[1]] = ENDING
+
+# set the starting cell
+grid[startingPoint[0]][startingPoint[1]] = VISITED
+
+# get direction based on x and y and the current robot position
+def determine_direction(x, y):
+    if x == robotPosition[0] + 1:
+        return "DOWN"
+    if x == robotPosition[0] - 1:
+        return "UP"
+    if y == robotPosition[1] + 1:
+        return "RIGHT"
+    if y == robotPosition[1] - 1:
+        return "LEFT"
+    print(f"cant go to [{x}, {y}] from {robotPosition}")
+
+def isWall(direction):
+    global sensor_data
+    if direction == "UP":
+        return sensor_data["Up"] < 1000.0
+    if direction == "DOWN":
+        return sensor_data["Down"] < 1000.0
+    if direction == "LEFT":
+        return sensor_data["Left"] < 1000.0
+    if direction == "RIGHT":
+        return sensor_data["Right"] < 1000.0
+
+
+def lookAroundCurrentPositionForWalls(print=False):
+    if isWall("UP") and robotPosition[0] - 1 >= 0:
+        grid[robotPosition[0] - 1][robotPosition[1]] = WALL
+    if isWall("DOWN") and robotPosition[0] + 1 < matrixRows:
+        grid[robotPosition[0] + 1][robotPosition[1]] = WALL
+    if isWall("LEFT") and robotPosition[1] - 1 >= 0:
+        grid[robotPosition[0]][robotPosition[1] - 1] = WALL
+    if isWall("RIGHT") and robotPosition[1] + 1 < matrixCols:
+        grid[robotPosition[0]][robotPosition[1] + 1] = WALL
+    if print:
+        printMatrix(grid)
+
 
 def moveBot(direction: str, step=False):
+    if step and not direction:
+        return
+    if isFinished:
+        return
     current_position = translation_field.getSFVec3f()
     bodyRotation = bodyRotationField.getSFRotation()
     global moving, move_bot_thread
-
     loopCount = 1 if not step else int(floorTileSize[1] * 100)
 
     if moving:
         return
 
     moving = True
+    if step: 
+        robotPosition[0] = (
+            robotPosition[0] + 1
+            if direction == "DOWN"
+            else robotPosition[0] - 1 if direction == "UP" else robotPosition[0]
+        )
+        robotPosition[1] = (
+            robotPosition[1] + 1
+            if direction == "RIGHT"
+            else robotPosition[1] - 1 if direction == "LEFT" else robotPosition[1]
+        )
     for i in range(loopCount):
         if direction == "UP":
             current_position[0] += 0.01
@@ -137,42 +227,94 @@ def moveBot(direction: str, step=False):
         bodyRotationField.setSFRotation(bodyRotation)
         if step:
             time.sleep(0.01)
-    time.sleep(0.5)
+    # time.sleep(0.5)
     moving = False
-
+    if step:
+        lookAroundCurrentPositionForWalls(True)
+        print(f"Moved {direction} to {robotPosition}")
 
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.connect((HOST, PORT))
 
-discoveryMatrix: list[list[int]] = [
-    [0 for i in range(matrixCols)] for j in range(matrixRows)
-]
+def determineDirectionBasedOnPosition(x, y):
+    if x == robotPosition[0] + 1:
+        return "DOWN"
+    if x == robotPosition[0] - 1:
+        return "UP"
+    if y == robotPosition[1] + 1:
+        return "RIGHT"
+    if y == robotPosition[1] - 1:
+        return "LEFT"
 
 
 def auto_move():
-    # move bot to the right for ever unless it hits a wall
-    # if sensor_data[direction] < 1000.0 then there is a wall
-    # if sensor_data[direction] == 1000.0 then there is no wall
-    global moving, move_bot_thread, sensor_data
-    while True:
+    def display_maze( path):
+        for item in path:
+            maze[item[0]][item[1]] = VISITED
+        pass
+    def search(path):
+        global isFinished
+        if isFinished:
+            return
         try:
-            if moving:
-                continue
-            direction = ""
-            # if sensor_data["Right"] == 1000.0:
-            #     direction = "RIGHT"
-            # elif sensor_data["Up"] == 1000.0:
-            #     direction = "UP"
-            if sensor_data["Down"] == 1000.0:
-                direction = "DOWN"
-            # elif sensor_data["Left"] == 1000.0:
-            #     direction = "LEFT"
-            if direction != "":
-                moveBot(direction, True)
+            # time.sleep(0.3)
+            cur = path[-1]
+            # display_maze(path)
+            dir = determine_direction(cur[0], cur[1])
+            if dir is not None:
+                moveBot(dir, True)
+            possibles = [
+                (cur[0], cur[1] + 1),
+                (cur[0], cur[1] - 1),
+                (cur[0] + 1, cur[1]),
+                (cur[0] - 1, cur[1]),
+            ]
+            random.shuffle(possibles)
+            for pos in possibles:
+                if (
+                    pos[0] < 0
+                    or pos[1] < 0
+                    or pos[0] > len(maze)
+                    or pos[1] > len(maze[0])
+                ):
+                    continue
+                # elif pos[0] < 0 or pos[1] < 0 or pos[0] > matrixRows -1 or pos[1] > matrixCols -1:
+                #     continue
+                elif maze[pos[0]][pos[1]] in [WALL, VISITED]:
+                    continue
+                elif pos in path:
+                    continue
+                # elif maze[pos[0]][pos[1]] == ENDING:
+                #     path = path + (pos,)
+                #     display_maze(path)
+                #     isFinished = True
+                #     print("Solution found! Press enter to finish")
+                #     return
+                else:
+                    newpath = path + (pos,)
+                    search(newpath)
+                    maze[pos[0]][pos[1]] = VISITED
+                    # display_maze(path)
+                    dir = determine_direction(cur[0], cur[1])
+                    if dir is not None:
+                        moveBot(dir, True)
+                    # time.sleep(0.3)
         except Exception as e:
-            pass
+            isFinished = True
+            # display_maze(path)
+            print("Solution found!")
+            # change the color of the all walls to green
+            # wallsGroup.getField("children").setMFColor(-1, [0, 1, 0])
+            time.sleep(10)
+            supervisor.worldReload()
+
+    time.sleep(0.5)
+    lookAroundCurrentPositionForWalls(True)
+    search(((startingPoint[0], startingPoint[1]),))
+    printMatrix(grid)
 
 # https://www.laurentluce.com/posts/solving-mazes-using-python-simple-recursivity-and-a-search/
+
 
 def keyBoardHandler():
     key = keyboard.getKey()
