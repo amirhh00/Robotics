@@ -3,15 +3,21 @@
 from controller import Robot
 import socket
 import json
-from dotenv import load_dotenv
-import os
+import importlib.util
 
-# Load environment variables from .env file
-load_dotenv()
+HOST = "127.0.0.1"
+PORT = 12345
+try:
+    importlib.util.find_spec("dotenv")
+    # Load environment variables from .env file (HOST, PORT)
+    from dotenv import load_dotenv
+    import os
 
-# Get HOST and PORT from environment variables
-HOST = os.getenv("HOST")
-PORT = int(os.getenv("PORT"))
+    load_dotenv()
+    HOST = os.getenv("HOST")
+    PORT = int(os.getenv("PORT"))
+except ImportError:
+    pass
 
 robot = Robot()
 

@@ -1,25 +1,33 @@
 """supervisor controller."""
 
+import importlib.util
 import random
 import os, sys
 from controller import Keyboard, Supervisor
 from math import pi
 import socket
 import json
-from dotenv import load_dotenv
 import os
 import time
 import threading
+import importlib.util
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../")
 from utils.maze import create_maze
 
-# Load environment variables from .env file
-load_dotenv()
+HOST = "127.0.0.1"
+PORT = 12345
+try:
+    importlib.util.find_spec("dotenv")
+    # Load environment variables from .env file (HOST, PORT)
+    from dotenv import load_dotenv
+    load_dotenv()
+    HOST = os.getenv("HOST")
+    PORT = int(os.getenv("PORT"))
+except ImportError:
+    pass
 
-# Get HOST and PORT from environment variables
-HOST = os.getenv("HOST")
-PORT = int(os.getenv("PORT"))
+
 
 supervisor = Supervisor()
 keyboard = Keyboard()
@@ -248,18 +256,12 @@ def determineDirectionBasedOnPosition(x, y):
 
 
 def auto_move():
-    def display_maze( path):
-        for item in path:
-            maze[item[0]][item[1]] = VISITED
-        pass
     def search(path):
         global isFinished
         if isFinished:
             return
         try:
-            # time.sleep(0.3)
             cur = path[-1]
-            # display_maze(path)
             dir = determine_direction(cur[0], cur[1])
             if dir is not None:
                 moveBot(dir, True)
@@ -278,33 +280,21 @@ def auto_move():
                     or pos[1] > len(maze[0])
                 ):
                     continue
-                # elif pos[0] < 0 or pos[1] < 0 or pos[0] > matrixRows -1 or pos[1] > matrixCols -1:
-                #     continue
                 elif maze[pos[0]][pos[1]] in [WALL, VISITED]:
                     continue
                 elif pos in path:
                     continue
-                # elif maze[pos[0]][pos[1]] == ENDING:
-                #     path = path + (pos,)
-                #     display_maze(path)
-                #     isFinished = True
-                #     print("Solution found! Press enter to finish")
-                #     return
                 else:
                     newpath = path + (pos,)
                     search(newpath)
                     maze[pos[0]][pos[1]] = VISITED
-                    # display_maze(path)
                     dir = determine_direction(cur[0], cur[1])
                     if dir is not None:
                         moveBot(dir, True)
-                    # time.sleep(0.3)
         except Exception as e:
+            # list index out of range
             isFinished = True
-            # display_maze(path)
             print("Solution found!")
-            # change the color of the all walls to green
-            # wallsGroup.getField("children").setMFColor(-1, [0, 1, 0])
             time.sleep(10)
             supervisor.worldReload()
 
@@ -312,9 +302,6 @@ def auto_move():
     lookAroundCurrentPositionForWalls(True)
     search(((startingPoint[0], startingPoint[1]),))
     printMatrix(grid)
-
-# https://www.laurentluce.com/posts/solving-mazes-using-python-simple-recursivity-and-a-search/
-
 
 def keyBoardHandler():
     key = keyboard.getKey()
